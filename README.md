@@ -1,2 +1,2 @@
-# checkHytRecordMod
-1.12.2花雨庭战绩查询Mod，一键鉴定纪狗(没战绩的就是新玩家，纪狗几率+80%)，/ca查询当前游戏内的所有玩家，/cr id查询指定玩家
+# dpce
+A 1.12.2 Forge Mod, Disable player collision effect
