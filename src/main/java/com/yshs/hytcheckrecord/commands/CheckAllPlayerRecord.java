@@ -28,16 +28,18 @@ public class CheckAllPlayerRecord {
     //入口
     @SubscribeEvent
     public void execute(ClientChatEvent event) {
+
         Minecraft mc = Minecraft.getMinecraft();
         String message = event.getMessage();
         if (!message.contains("/ca")) {
             return;
         }
         event.setCanceled(true);
+        mc.ingameGUI.getChatGUI().addToSentMessages(message);
         Collection<NetworkPlayerInfo> playerInfoMap = Objects.requireNonNull(mc.getConnection()).getPlayerInfoMap();
         int size = playerInfoMap.size();
         if (size > 32) {
-            mc.player.sendMessage(new TextComponentString(TextFormatting.RED + "当前服务器人数为" + size + "人。人数过多，为防止误操作，已取消查询"));
+            GUIMessage.printMessage(TextFormatting.RED + "当前服务器人数为" + size + "人。人数过多，为防止误操作，已取消查询");
             return;
         }
         List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -104,33 +106,34 @@ public class CheckAllPlayerRecord {
                 GUIMessage.printMessage(TextFormatting.GREEN + "大家都是绿色玩家呢!");
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
             }
+            if (!highRecordPlayersList.isEmpty() || !dangerousPlayersList.isEmpty()) {
+                GUIMessage.printSplitLine();
+            }
+            //高手信息
             if (!highRecordPlayersList.isEmpty()) {
                 ArrayList<String> highRecordPlayers = new ArrayList<>();
                 for (BedWarsRecord record : highRecordPlayersList) {
                     highRecordPlayers.add(record.getPlayerName());
                 }
                 mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers)));
-                //打印空行
-                GUIMessage.printEmptyLine();
                 for (BedWarsRecord record : highRecordPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (highRecordPlayersList.indexOf(record) != highRecordPlayersList.size() - 1) {
-                        GUIMessage.printMessage(TextFormatting.WHITE + "------------------------------------");
+                        GUIMessage.printSplitLine();
                     }
                 }
             }
+            //危险玩家信息
             if (!dangerousPlayersList.isEmpty()) {
                 ArrayList<String> dangerousPlayers = new ArrayList<>();
                 for (BedWarsRecord record : dangerousPlayersList) {
                     dangerousPlayers.add(record.getPlayerName());
                 }
                 mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是危险玩家: " + TextFormatting.DARK_RED + String.join(", ", dangerousPlayers)));
-                //打印空行
-                GUIMessage.printEmptyLine();
                 for (BedWarsRecord record : dangerousPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (dangerousPlayersList.indexOf(record) != dangerousPlayersList.size() - 1) {
-                        GUIMessage.printMessage(TextFormatting.WHITE + "------------------------------------");
+                        GUIMessage.printSplitLine();
                     }
                 }
             }

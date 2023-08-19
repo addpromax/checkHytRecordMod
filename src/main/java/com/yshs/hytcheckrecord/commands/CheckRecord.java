@@ -28,6 +28,7 @@ public class CheckRecord {
 
     public static BedWarsRecord getRecord(String questUrl) {
         try {
+            LOGGER.info("正在发送请求到：" + questUrl);
             URL url = new URL(questUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -54,7 +55,7 @@ public class CheckRecord {
     public static void printPlayerRecord(BedWarsRecord bedWarsRecord) {
         LOGGER.info("正在检查玩家" + bedWarsRecord.getPlayerName() + "的记录");
         String playerName = bedWarsRecord.getPlayerName();
-        GUIMessage.printMessage(TextFormatting.GREEN + "玩家" + playerName + "的起床战争记录如下：");
+        GUIMessage.printMessage(TextFormatting.GREEN + String.format("玩家「%s」的起床战争记录如下:", playerName));
         //总场次
         int playNum = bedWarsRecord.getPlayNum();
         //胜场
