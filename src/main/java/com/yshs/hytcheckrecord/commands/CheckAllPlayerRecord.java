@@ -106,11 +106,9 @@ public class CheckAllPlayerRecord {
                 GUIMessage.printMessage(TextFormatting.GREEN + "大家都是绿色玩家呢!");
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
             }
-            if (!highRecordPlayersList.isEmpty() || !dangerousPlayersList.isEmpty()) {
-                GUIMessage.printSplitLine();
-            }
             //高手信息
             if (!highRecordPlayersList.isEmpty()) {
+                GUIMessage.printSplitLine();
                 ArrayList<String> highRecordPlayers = new ArrayList<>();
                 for (BedWarsRecord record : highRecordPlayersList) {
                     highRecordPlayers.add(record.getPlayerName());
@@ -125,6 +123,7 @@ public class CheckAllPlayerRecord {
             }
             //危险玩家信息
             if (!dangerousPlayersList.isEmpty()) {
+                GUIMessage.printSplitLine();
                 ArrayList<String> dangerousPlayers = new ArrayList<>();
                 for (BedWarsRecord record : dangerousPlayersList) {
                     dangerousPlayers.add(record.getPlayerName());
