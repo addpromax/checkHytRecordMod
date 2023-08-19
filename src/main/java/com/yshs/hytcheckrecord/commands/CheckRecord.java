@@ -6,10 +6,11 @@ import com.yshs.hytcheckrecord.records.BedWarsRecord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -23,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CheckRecord {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static BedWarsRecord getRecord(String questUrl) {
         try {
@@ -50,9 +52,9 @@ public class CheckRecord {
     }
 
     public static void printPlayerRecord(BedWarsRecord bedWarsRecord) {
+        LOGGER.info("正在检查玩家" + bedWarsRecord.getPlayerName() + "的记录");
         String playerName = bedWarsRecord.getPlayerName();
-        Minecraft mc = Minecraft.getMinecraft();
-        GUIMessage.printMessage(TextFormatting.GREEN, "玩家" + playerName + "的起床战争记录如下：");
+        GUIMessage.printMessage(TextFormatting.GREEN + "玩家" + playerName + "的起床战争记录如下：");
         //总场次
         int playNum = bedWarsRecord.getPlayNum();
         //胜场
@@ -68,12 +70,11 @@ public class CheckRecord {
         //破坏床总数
         int beddesNum = bedWarsRecord.getBeddesNum();
 
-        GUIMessage.printMessage(TextFormatting.RED, "总场次：" + playNum);
-        GUIMessage.printMessage(TextFormatting.RED, "胜场/胜率：" + winNum + "/" + String.format("%.2f", winRatePercent) + "%");
-        GUIMessage.printMessage(TextFormatting.RED, "MVP次数/MVP率：" + mvpNum + "/" + String.format("%.2f", mvpRatePercent) + "%");
-        GUIMessage.printMessage(TextFormatting.RED, "击杀/死亡：" + String.format("%.2f", killDead));
-        GUIMessage.printMessage(TextFormatting.RED, "破坏床总数：" + beddesNum);
-        mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
+        GUIMessage.printMessage(TextFormatting.RED + "总场次：" + playNum);
+        GUIMessage.printMessage(TextFormatting.RED + "胜场/胜率：" + winNum + "/" + String.format("%.2f", winRatePercent) + "%");
+        GUIMessage.printMessage(TextFormatting.RED + "MVP次数/MVP率：" + mvpNum + "/" + String.format("%.2f", mvpRatePercent) + "%");
+        GUIMessage.printMessage(TextFormatting.RED + "击杀/死亡：" + String.format("%.2f", killDead));
+        GUIMessage.printMessage(TextFormatting.RED + "破坏床总数：" + beddesNum);
     }
 
     @SubscribeEvent
@@ -96,7 +97,7 @@ public class CheckRecord {
             return;
         }
         if (playerName.isEmpty()) {
-            GUIMessage.printMessage(TextFormatting.RED, "格式：「/cr 玩家名」 或 「玩家名/cr」(有没有空格都可以)");
+            GUIMessage.printMessage(TextFormatting.RED + "格式：「/cr 玩家名」 或 「玩家名/cr」(有没有空格都可以)");
             mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.BLOCK_ANVIL_PLACE, 1.0f));
             return;
         }
@@ -107,17 +108,18 @@ public class CheckRecord {
             throw new RuntimeException(e);
         }
         String finalPlayerName = playerName;
-        CompletableFuture.runAsync(()->{
+        CompletableFuture.runAsync(() -> {
             String bedWarsQuestUrl = "https://mc-api.16163.com/search/bedwars.html?uid=" + encodedPlayerName;
             BedWarsRecord bedWarsRecord = getRecord(bedWarsQuestUrl);
             if (bedWarsRecord != null) {
                 bedWarsRecord.setPlayerName(finalPlayerName);
             }
             if (bedWarsRecord == null) {
-                GUIMessage.printMessage(TextFormatting.RED, "玩家" + finalPlayerName + "没有记录，可能为新玩家");
+                GUIMessage.printMessage(TextFormatting.RED + "玩家" + finalPlayerName + "没有记录，可能为新玩家");
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.BLOCK_ANVIL_PLACE, 1.0f));
             } else {
                 printPlayerRecord(bedWarsRecord);
+                mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
             }
         });
     }

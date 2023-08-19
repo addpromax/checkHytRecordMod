@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class CheckAllPlayerRecord {
     private static final Logger LOGGER = LogManager.getLogger();
+
     //入口
     @SubscribeEvent
     public void execute(ClientChatEvent event) {
@@ -42,18 +43,23 @@ public class CheckAllPlayerRecord {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         // 创建一个新的ArrayList来存放没有记录的玩家
         List<String> noRecordPlayers = new ArrayList<>();
-        // 创建一个新的ArrayList来存放mvp率大于50%，或者胜率大于70%的玩家
-        List<BedWarsRecord> highRecordPlayersRecord = new ArrayList<>();
-
+        // 创建一个新的ArrayList来存放kd>1的基础上，满足以下任意一个条件：mvp率大于50%，胜率大于70%的
+        List<BedWarsRecord> highRecordPlayersList = new ArrayList<>();
+        // 创建一个新的ArrayList来存放kd>1，总场次<50的基础上，满足以下任意一个条件：mvp率大于50%，胜率大于70%的，取名为dangerousPlayersList
+        List<BedWarsRecord> dangerousPlayersList = new ArrayList<>();
 
         String selfName = mc.player.getName();
 
+        // 循环检查每个玩家
         for (NetworkPlayerInfo networkPlayerInfo : playerInfoMap) {
             String playerName = networkPlayerInfo.getGameProfile().getName();
             LOGGER.info("now check " + playerName);
+            // 如果是自己，就跳过
             if (selfName.equals(playerName)) {
                 continue;
             }
+
+            // url编码玩家名用来查询
             String encodedPlayerName;
             try {
                 encodedPlayerName = URLEncoder.encode(playerName, String.valueOf(StandardCharsets.UTF_8));
@@ -61,34 +67,71 @@ public class CheckAllPlayerRecord {
                 throw new RuntimeException(e);
             }
             String bedWarsQuestUrl = "https://mc-api.16163.com/search/bedwars.html?uid=" + encodedPlayerName;
+
+            // 异步查询玩家记录
             futures.add(CompletableFuture.runAsync(() -> {
+                //开始查询
                 BedWarsRecord bedWarsRecord = CheckRecord.getRecord(bedWarsQuestUrl);
                 if (bedWarsRecord != null) {
                     bedWarsRecord.setPlayerName(playerName);
                 }
+                // 如果没有查询到记录，就将玩家添加到无战绩列表中
                 if (bedWarsRecord == null) {
-                    // 如果没有查询到记录，就将玩家添加到列表中
                     noRecordPlayers.add(playerName);
                     LOGGER.info(playerName + " no record");
-                } else if (bedWarsRecord.getMvpRatePercent() > 50 || bedWarsRecord.getWinRatePercent() > 70) {
-                    highRecordPlayersRecord.add(bedWarsRecord);
-                    LOGGER.info(playerName + " high record");
+                    return;
+                }
+                if (bedWarsRecord.getKillDead() > 1 && (bedWarsRecord.getMvpRatePercent() > 50 || bedWarsRecord.getWinRatePercent() > 70)) {
+                    //看看是不是危险玩家
+                    if (bedWarsRecord.getPlayNum() < 50) {
+                        dangerousPlayersList.add(bedWarsRecord);
+                        LOGGER.info(playerName + " dangerous");
+                        return;
+                    }
+                    if (bedWarsRecord.getPlayNum() >= 50) {
+                        highRecordPlayersList.add(bedWarsRecord);
+                        LOGGER.info(playerName + " high record");
+                    }
                 }
             }));
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
             if (!noRecordPlayers.isEmpty()) {
-                GUIMessage.printMessage(TextFormatting.RED, "以下玩家没有记录，可能为新玩家：" + String.join(", ", noRecordPlayers));
+                GUIMessage.printMessage(TextFormatting.WHITE + "以下玩家没有记录，可能为新玩家: " + TextFormatting.RED + String.join(", ", noRecordPlayers));
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.BLOCK_ANVIL_PLACE, 1.0f));
             }
             if (noRecordPlayers.isEmpty()) {
-                GUIMessage.printMessage(TextFormatting.GREEN, "大家都是绿色玩家呢!\n");
+                GUIMessage.printMessage(TextFormatting.GREEN + "大家都是绿色玩家呢!");
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
             }
-            if (!highRecordPlayersRecord.isEmpty()) {
-                GUIMessage.printMessage(TextFormatting.RED, "以下玩家可能是高手：");
-                for (BedWarsRecord record : highRecordPlayersRecord) {
+            if (!highRecordPlayersList.isEmpty()) {
+                ArrayList<String> highRecordPlayers = new ArrayList<>();
+                for (BedWarsRecord record : highRecordPlayersList) {
+                    highRecordPlayers.add(record.getPlayerName());
+                }
+                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers)));
+                //打印空行
+                GUIMessage.printEmptyLine();
+                for (BedWarsRecord record : highRecordPlayersList) {
                     CheckRecord.printPlayerRecord(record);
+                    if (highRecordPlayersList.indexOf(record) != highRecordPlayersList.size() - 1) {
+                        GUIMessage.printMessage(TextFormatting.WHITE + "------------------------------------");
+                    }
+                }
+            }
+            if (!dangerousPlayersList.isEmpty()) {
+                ArrayList<String> dangerousPlayers = new ArrayList<>();
+                for (BedWarsRecord record : dangerousPlayersList) {
+                    dangerousPlayers.add(record.getPlayerName());
+                }
+                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是危险玩家: " + TextFormatting.DARK_RED + String.join(", ", dangerousPlayers)));
+                //打印空行
+                GUIMessage.printEmptyLine();
+                for (BedWarsRecord record : dangerousPlayersList) {
+                    CheckRecord.printPlayerRecord(record);
+                    if (dangerousPlayersList.indexOf(record) != dangerousPlayersList.size() - 1) {
+                        GUIMessage.printMessage(TextFormatting.WHITE + "------------------------------------");
+                    }
                 }
             }
         });
