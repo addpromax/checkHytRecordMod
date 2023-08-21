@@ -71,11 +71,19 @@ public class CheckRecord {
         //破坏床总数
         int beddesNum = bedWarsRecord.getBeddesNum();
 
-        GUIMessage.printMessage(TextFormatting.RED + "总场次：" + playNum);
-        GUIMessage.printMessage(TextFormatting.RED + "胜场/胜率：" + winNum + "/" + String.format("%.2f", winRatePercent) + "%");
-        GUIMessage.printMessage(TextFormatting.RED + "MVP次数/MVP率：" + mvpNum + "/" + String.format("%.2f", mvpRatePercent) + "%");
-        GUIMessage.printMessage(TextFormatting.RED + "击杀/死亡：" + String.format("%.2f", killDead));
-        GUIMessage.printMessage(TextFormatting.RED + "破坏床总数：" + beddesNum);
+        GUIMessage.printMessage("总场次：" + playNum);
+        if (winRatePercent > 70) {
+            GUIMessage.printMessage(TextFormatting.RED + TextFormatting.BOLD.toString() + "胜场/胜率：" + winNum + "/" + String.format("%.2f%%", winRatePercent));
+        } else {
+            GUIMessage.printMessage("胜场/胜率：" + winNum + "/" + String.format("%.2f%%", winRatePercent));
+        }
+        if (mvpRatePercent > 50) {
+            GUIMessage.printMessage(TextFormatting.RED + TextFormatting.BOLD.toString() + "MVP次数/MVP率：" + mvpNum + "/" + String.format("%.2f%%", mvpRatePercent));
+        } else {
+            GUIMessage.printMessage("MVP次数/MVP率：" + mvpNum + "/" + String.format("%.2f%%", mvpRatePercent));
+        }
+        GUIMessage.printMessage("击杀/死亡：" + String.format("%.2f", killDead));
+        GUIMessage.printMessage("破坏床总数：" + beddesNum);
     }
 
     @SubscribeEvent
@@ -88,6 +96,7 @@ public class CheckRecord {
         String playerName;
         if (matcher.matches()) {
             event.setCanceled(true);
+            mc.ingameGUI.getChatGUI().addToSentMessages(message);
             if (matcher.group(1) != null) {
                 playerName = matcher.group(1);
             } else {

@@ -6,7 +6,7 @@ import net.minecraft.util.text.TextFormatting;
 
 public class GUIMessage {
     public static void printMessage(String message) {
-        Minecraft minecraft = Minecraft.getMinecraft();
+         Minecraft minecraft = Minecraft.getMinecraft();
         minecraft.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(message));
     }
 

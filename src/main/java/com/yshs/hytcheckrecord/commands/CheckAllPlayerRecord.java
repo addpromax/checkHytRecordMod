@@ -99,11 +99,11 @@ public class CheckAllPlayerRecord {
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
             if (!noRecordPlayers.isEmpty()) {
-                GUIMessage.printMessage(TextFormatting.WHITE + "以下玩家没有记录，可能为新玩家: " + TextFormatting.RED + String.join(", ", noRecordPlayers));
+                GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家没有记录，可能为新玩家: " + TextFormatting.RED + String.join(", ", noRecordPlayers));
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.BLOCK_ANVIL_PLACE, 1.0f));
             }
             if (noRecordPlayers.isEmpty()) {
-                GUIMessage.printMessage(TextFormatting.GREEN + "大家都是绿色玩家呢!");
+                GUIMessage.printMessage(TextFormatting.GREEN + TextFormatting.BOLD.toString() + "大家都是绿色玩家呢!");
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f));
             }
             //高手信息
@@ -113,7 +113,7 @@ public class CheckAllPlayerRecord {
                 for (BedWarsRecord record : highRecordPlayersList) {
                     highRecordPlayers.add(record.getPlayerName());
                 }
-                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers)));
+                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers)));
                 for (BedWarsRecord record : highRecordPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (highRecordPlayersList.indexOf(record) != highRecordPlayersList.size() - 1) {
@@ -128,7 +128,7 @@ public class CheckAllPlayerRecord {
                 for (BedWarsRecord record : dangerousPlayersList) {
                     dangerousPlayers.add(record.getPlayerName());
                 }
-                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + "以下玩家可能是危险玩家: " + TextFormatting.DARK_RED + String.join(", ", dangerousPlayers)));
+                GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是危险玩家: " + TextFormatting.DARK_RED + String.join(", ", dangerousPlayers));
                 for (BedWarsRecord record : dangerousPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (dangerousPlayersList.indexOf(record) != dangerousPlayersList.size() - 1) {
