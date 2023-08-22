@@ -5,10 +5,11 @@ import com.yshs.hytcheckrecord.records.BedWarsRecord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.ClientChatEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,14 +17,33 @@ import org.apache.logging.log4j.Logger;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CheckAllPlayerRecord {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    static HashMap<String, String> newPlayerNameHashMap = new HashMap<>();
+
+    private static void putNewPlayerNameToMap(List<String> playerNames, String preNameString, TextFormatting preNameStringColor) {
+        Minecraft mc = Minecraft.getMinecraft();
+        for (String playerName : playerNames) {
+            TextFormatting teamColor = TextFormatting.WHITE;
+            newPlayerNameHashMap.put(playerName, String.format("%s[%s]%s%s", preNameStringColor, preNameString, teamColor, playerName));
+            EntityPlayer playerEntityByName = mc.world.getPlayerEntityByName(playerName);
+            if (playerEntityByName != null) {
+                playerEntityByName.refreshDisplayName();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void setPlayerName(PlayerEvent.NameFormat event) {
+        String username = event.getUsername();
+        if (newPlayerNameHashMap.get(username) != null) {
+            event.setDisplayname(newPlayerNameHashMap.get(username));
+        }
+    }
 
     //入口
     @SubscribeEvent
@@ -31,6 +51,13 @@ public class CheckAllPlayerRecord {
 
         Minecraft mc = Minecraft.getMinecraft();
         String message = event.getMessage();
+        if (message.contains("/cc")) {
+            newPlayerNameHashMap.clear();
+            GUIMessage.printMessage(TextFormatting.GREEN + "已清除新玩家名列表");
+            event.setCanceled(true);
+            mc.ingameGUI.getChatGUI().addToSentMessages(message);
+            return;
+        }
         if (!message.contains("/ca")) {
             return;
         }
@@ -55,13 +82,14 @@ public class CheckAllPlayerRecord {
         // 循环检查每个玩家
         for (NetworkPlayerInfo networkPlayerInfo : playerInfoMap) {
             String playerName = networkPlayerInfo.getGameProfile().getName();
-            LOGGER.info("now check " + playerName);
+
             // 如果是自己，就跳过
             if (selfName.equals(playerName)) {
                 continue;
             }
 
             // url编码玩家名用来查询
+            LOGGER.info("now check " + playerName);
             String encodedPlayerName;
             try {
                 encodedPlayerName = URLEncoder.encode(playerName, String.valueOf(StandardCharsets.UTF_8));
@@ -101,6 +129,7 @@ public class CheckAllPlayerRecord {
             if (!noRecordPlayers.isEmpty()) {
                 GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家没有记录，可能为新玩家: " + TextFormatting.RED + String.join(", ", noRecordPlayers));
                 mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.BLOCK_ANVIL_PLACE, 1.0f));
+                putNewPlayerNameToMap(noRecordPlayers, "新玩家", TextFormatting.RED);
             }
             if (noRecordPlayers.isEmpty()) {
                 GUIMessage.printMessage(TextFormatting.GREEN + TextFormatting.BOLD.toString() + "大家都是绿色玩家呢!");
@@ -113,13 +142,14 @@ public class CheckAllPlayerRecord {
                 for (BedWarsRecord record : highRecordPlayersList) {
                     highRecordPlayers.add(record.getPlayerName());
                 }
-                mc.ingameGUI.getChatGUI().printChatMessage(new TextComponentString(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers)));
+                GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是高手: " + TextFormatting.LIGHT_PURPLE + String.join(", ", highRecordPlayers));
                 for (BedWarsRecord record : highRecordPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (highRecordPlayersList.indexOf(record) != highRecordPlayersList.size() - 1) {
                         GUIMessage.printSplitLine();
                     }
                 }
+                putNewPlayerNameToMap(highRecordPlayers, "高手", TextFormatting.LIGHT_PURPLE);
             }
             //危险玩家信息
             if (!dangerousPlayersList.isEmpty()) {
@@ -128,14 +158,17 @@ public class CheckAllPlayerRecord {
                 for (BedWarsRecord record : dangerousPlayersList) {
                     dangerousPlayers.add(record.getPlayerName());
                 }
-                GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是危险玩家: " + TextFormatting.DARK_RED + String.join(", ", dangerousPlayers));
+                GUIMessage.printMessage(TextFormatting.WHITE + TextFormatting.BOLD.toString() + "以下玩家可能是危险玩家: " + TextFormatting.BLACK + String.join(", ", dangerousPlayers));
                 for (BedWarsRecord record : dangerousPlayersList) {
                     CheckRecord.printPlayerRecord(record);
                     if (dangerousPlayersList.indexOf(record) != dangerousPlayersList.size() - 1) {
                         GUIMessage.printSplitLine();
                     }
                 }
+                putNewPlayerNameToMap(dangerousPlayers, "危险玩家", TextFormatting.BLACK);
             }
+
         });
+
     }
 }

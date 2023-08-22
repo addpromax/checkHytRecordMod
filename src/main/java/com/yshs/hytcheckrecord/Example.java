@@ -10,10 +10,10 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = Example.MOD_ID)
+@Mod(clientSideOnly = true, modid = Example.MOD_ID)
 public class Example {
-    private static final Logger LOGGER = LogManager.getLogger();
     public static final String MOD_ID = "hytcheckrecord";
+    private static final Logger LOGGER = LogManager.getLogger();
 
     @Mod.EventHandler
     public void onPreInit(FMLPreInitializationEvent event) {
